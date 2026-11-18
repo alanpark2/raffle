@@ -112,14 +112,14 @@
           <h2 id="manage-title">Names &amp; setup</h2>
           <button class="btn-ghost" id="close-manage" type="button">Close</button>
         </div>
-        <p class="hint">The big gold button really draws and removes that student, including any extra entries. Practice draw is the rehearsal. <strong>Upload names</strong> reads a class list (CSV, Excel, or text). <strong>Save a copy</strong> saves this raffle so you can open it on another computer. The show runs on this computer, so it stays fast with no internet.</p>
+        <p class="hint">The big gold button really draws and removes that student, including any extra entries. Practice draw is the rehearsal. <strong>Upload names</strong> reads a class list (CSV, Excel, or text). The show runs on this computer, so it stays fast. Anyone who opens this site shares the same class list.</p>
         <p class="sync-detail" id="sync-detail"></p>
         <p class="error" id="setup-note"></p>
 
         <section class="panel">
           <h3>Class list</h3>
           <div class="stack">
-            <label>Room name <input id="class-title" type="text" maxlength="79" /></label>
+            <label>Class name <input id="class-title" type="text" maxlength="79" /></label>
             <div class="row">
               <button class="btn-mint" id="upload-btn" type="button">Upload names</button>
               <button class="btn-ghost" id="save-copy-btn" type="button">Save a copy</button>
@@ -141,25 +141,6 @@
             <ul class="people" id="winner-admin"></ul>
             <h3>Sitting out</h3>
             <ul class="people" id="out-list"></ul>
-          </div>
-        </section>
-
-        <section class="panel">
-          <h3>Firebase, only for a second computer</h3>
-          <p class="hint">Skip this. It does not make the draw faster or more reliable. It only copies the name list to another computer. If you do use it, stay on the free Spark plan and do not turn on billing. Enable Firestore and Anonymous sign-in, publish <code>firestore.rules</code>, then paste the web config. The room code is the key to the list.</p>
-          <p class="sync-detail" id="firebase-source"></p>
-          <div class="stack">
-            <label>Room code <input id="room-code" type="text" maxlength="40" autocomplete="off" /></label>
-            <div class="row">
-              <button class="btn-mint" id="save-room" type="button">Save room code</button>
-              <button class="btn-ghost" id="copy-room" type="button">Copy room code</button>
-            </div>
-            <textarea id="firebase-paste" class="paste" spellcheck="false" placeholder="Paste the firebaseConfig snippet from the Firebase console"></textarea>
-            <div class="row">
-              <button class="btn-mint" id="connect-firebase" type="button">Connect Firebase</button>
-              <button class="btn-ghost" id="clear-firebase" type="button">Use this browser only</button>
-            </div>
-            <p id="firebase-note" class="sync-detail" role="status"></p>
           </div>
         </section>
 

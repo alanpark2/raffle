@@ -1,12 +1,12 @@
 import type { FirebaseConfig } from "./firebaseConfig";
 import { friendlyFirebaseError, openSession, type RemoteSession } from "./firebaseSync";
 import {
-  CONFIG_KEY,
+  FIXED_ROOM,
   ROOM_KEY,
-  createRoomCode,
   emptyData,
   hasPeople,
   normalizeRoom,
+  raffleStorageKey,
   sameShow,
   sanitizeData,
   type RaffleData,
@@ -14,16 +14,18 @@ import {
 
 export type SyncState = "local" | "connecting" | "live" | "error";
 
+const LIVE_MESSAGE = "Synced";
+const LOCAL_MESSAGE = "Saved on this browser.";
+
 const memory = new Map<string, string>();
 
 export class RaffleStore {
   room: string;
   data: RaffleData;
   sync: SyncState = "local";
-  syncMessage = "Saved on this browser. Use Save a copy to open it on another computer.";
+  syncMessage = LOCAL_MESSAGE;
   conflict: RaffleData | null = null;
   spinning = false;
-  private config: FirebaseConfig | null = null;
   private session: RemoteSession | null = null;
   private unsub: (() => void) | null = null;
   private writeQueue: Promise<void> = Promise.resolve();
@@ -33,10 +35,17 @@ export class RaffleStore {
 
   constructor(onChange: () => void) {
     this.onChange = onChange;
-    const saved = normalizeRoom(readStorage(ROOM_KEY) || "");
-    this.room = saved || createRoomCode();
-    writeStorage(ROOM_KEY, this.room);
+    const previous = normalizeRoom(readStorage(ROOM_KEY) || "");
+    this.room = FIXED_ROOM;
     this.data = loadLocal(this.room);
+    if (!hasPeople(this.data)) {
+      const legacy = previous && previous !== this.room ? loadLocal(previous) : null;
+      if (legacy && hasPeople(legacy)) {
+        this.data = legacy;
+        saveLocal(this.room, legacy);
+      }
+    }
+    writeStorage(ROOM_KEY, this.room);
   }
 
   commit(next: RaffleData): void {
@@ -47,27 +56,9 @@ export class RaffleStore {
     if (this.allowWrites && this.session) this.enqueue(data);
   }
 
-  async useRoom(raw: string): Promise<string | null> {
-    const room = normalizeRoom(raw);
-    if (!room) return null;
-    if (room === this.room) return room;
-    this.unsub?.();
-    this.unsub = null;
-    this.allowWrites = false;
-    this.conflict = null;
-    this.queuedRemote = null;
-    this.room = room;
-    writeStorage(ROOM_KEY, room);
-    this.data = loadLocal(room);
-    this.onChange();
-    if (this.config) await this.connect(this.config);
-    return room;
-  }
-
   async connect(config: FirebaseConfig): Promise<void> {
-    this.config = config;
     this.sync = "connecting";
-    this.syncMessage = "Connecting to Firebase…";
+    this.syncMessage = "Connecting…";
     this.allowWrites = false;
     this.onChange();
     try {
@@ -79,17 +70,6 @@ export class RaffleStore {
       this.allowWrites = false;
       this.onChange();
     }
-  }
-
-  stopSync(): void {
-    this.unsub?.();
-    this.unsub = null;
-    this.allowWrites = false;
-    this.config = null;
-    this.sync = "local";
-    this.syncMessage = "Saved on this browser. Use Save a copy to open it on another computer.";
-    this.conflict = null;
-    this.onChange();
   }
 
   flushRemote(): void {
@@ -125,8 +105,8 @@ export class RaffleStore {
         if (!exists) {
           this.allowWrites = true;
           this.sync = "live";
-          this.syncMessage = `Synced · room ${room}`;
-          if (hasPeople(this.data)) this.enqueue(this.data);
+          this.syncMessage = LIVE_MESSAGE;
+          if (hasPeople(this.data)) this.seed(this.data);
           this.onChange();
           return;
         }
@@ -144,7 +124,7 @@ export class RaffleStore {
           saveLocal(this.room, remote);
         }
         this.sync = "live";
-        this.syncMessage = `Synced · room ${room}`;
+        this.syncMessage = LIVE_MESSAGE;
         this.onChange();
       },
       (message) => {
@@ -161,13 +141,13 @@ export class RaffleStore {
     const browser = stashed && hasPeople(stashed) ? stashed : this.data;
     this.allowWrites = true;
     this.sync = "live";
-    this.syncMessage = `Synced · room ${this.room}`;
+    this.syncMessage = LIVE_MESSAGE;
 
     if (!hasPeople(remote) && hasPeople(browser)) {
       this.data = browser;
       saveLocal(this.room, browser);
       this.clearConflict();
-      this.enqueue(browser);
+      this.seed(browser);
       this.onChange();
       return;
     }
@@ -206,15 +186,36 @@ export class RaffleStore {
 
   private enqueue(data: RaffleData): void {
     const snapshot = structuredClone(data);
+    this.queue(async (session, room) => {
+      await session.push(room, snapshot);
+    });
+  }
+
+  private seed(data: RaffleData): void {
+    const snapshot = structuredClone(data);
+    this.queue(async (session, room) => {
+      const existing = await session.seedIfEmpty(room, snapshot);
+      if (!existing || this.room !== room) return;
+      if (!sameShow(existing, this.data)) this.rememberConflict(this.data);
+      else this.clearConflict();
+      this.data = existing;
+      saveLocal(room, existing);
+      this.sync = "live";
+      this.syncMessage = LIVE_MESSAGE;
+      this.onChange();
+    });
+  }
+
+  private queue(task: (session: RemoteSession, room: string) => Promise<void>): void {
     const room = this.room;
     this.writeQueue = this.writeQueue
       .catch(() => undefined)
       .then(async () => {
         if (!this.session || this.room !== room || !this.allowWrites) return;
-        await this.session.push(room, snapshot);
+        await task(this.session, room);
         if (this.sync === "error") {
           this.sync = "live";
-          this.syncMessage = `Synced · room ${room}`;
+          this.syncMessage = LIVE_MESSAGE;
           this.onChange();
         }
       })
@@ -226,20 +227,8 @@ export class RaffleStore {
   }
 }
 
-export function loadSavedConfigText(): string {
-  return readStorage(CONFIG_KEY) || "";
-}
-
-export function saveConfigText(text: string): void {
-  writeStorage(CONFIG_KEY, text);
-}
-
-export function clearSavedConfig(): void {
-  removeStorage(CONFIG_KEY);
-}
-
 function localKey(room: string): string {
-  return `starlight-raffle:v1:${room}`;
+  return raffleStorageKey(room);
 }
 
 function loadLocal(room: string): RaffleData {
@@ -270,15 +259,6 @@ function writeStorage(key: string, value: string): void {
     localStorage.setItem(key, value);
   } catch {
     // Private mode can refuse storage. The in-memory copy still runs the show.
-  }
-}
-
-function removeStorage(key: string): void {
-  memory.delete(key);
-  try {
-    localStorage.removeItem(key);
-  } catch {
-    // Ignore storage failures.
   }
 }
 

@@ -7,8 +7,19 @@ export type FirebaseConfig = {
   appId: string;
 };
 
-export function configFromEnv(): FirebaseConfig | null {
-  return asConfig({
+// Public web config for the assembly site. Not a server secret.
+// Used only when the VITE_FIREBASE_* variables are empty.
+export const PUBLIC_FIREBASE_CONFIG: FirebaseConfig = {
+  apiKey: "AIzaSyClbWyPm8-ouIJ7t_QqpPPZHA5owB4G4r4",
+  authDomain: "bems-raffle.firebaseapp.com",
+  projectId: "bems-raffle",
+  storageBucket: "bems-raffle.firebasestorage.app",
+  messagingSenderId: "201254648832",
+  appId: "1:201254648832:web:088917bf35f3680b7face5",
+};
+
+export function configFromEnv(): FirebaseConfig {
+  return resolveFirebaseConfig({
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
     projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
@@ -16,6 +27,10 @@ export function configFromEnv(): FirebaseConfig | null {
     messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
     appId: import.meta.env.VITE_FIREBASE_APP_ID,
   });
+}
+
+export function resolveFirebaseConfig(env: Partial<Record<keyof FirebaseConfig, unknown>>): FirebaseConfig {
+  return asConfig(env) ?? PUBLIC_FIREBASE_CONFIG;
 }
 
 export function parseFirebaseConfig(input: string): FirebaseConfig | null {

@@ -1,7 +1,7 @@
 rules_version = '2';
 // BEMS Raffle. Free Spark plan only — no Cloud Functions, no billing.
-// Any signed-in visitor who knows a room code can read and update that room.
-// The room code is the privacy key. Use the long one the app generates.
+// One shared assembly list. The app uses the room id bems-assembly.
+// Any signed-in visitor can read and update that list.
 service cloud.firestore {
   match /databases/{database}/documents {
     match /raffles/{roomId} {

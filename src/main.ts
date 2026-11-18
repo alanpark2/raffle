@@ -11,8 +11,7 @@ import { ShowAudio } from "./audio";
 import { PARTY_COLORS, colorFor } from "./color";
 import { celebrateBurst, mountConfetti } from "./confetti";
 import { DEMO_NAMES } from "./demo";
-import { configFromEnv, parseFirebaseConfig } from "./firebaseConfig";
-import { friendlyFirebaseError } from "./firebaseSync";
+import { configFromEnv } from "./firebaseConfig";
 import { PIN_KEY, hasPeople, raffleFile, readSavedRaffle, sameShow } from "./model";
 import { dedupeNames, flipFirstLast, namesFromFile, namesFromText, type ParseResult } from "./parseNames";
 import {
@@ -29,7 +28,7 @@ import {
   stepDelay,
   type DrawMode,
 } from "./raffle";
-import { RaffleStore, clearSavedConfig, loadSavedConfigText, saveConfigText } from "./store";
+import { RaffleStore } from "./store";
 
 type Phase = "idle" | "spinning" | "celebrating";
 
@@ -69,14 +68,8 @@ const preview = must<HTMLDialogElement>("preview");
 const pinDialog = must<HTMLDialogElement>("pin-dialog");
 const confirmDialog = must<HTMLDialogElement>("confirm-dialog");
 const classTitle = must<HTMLInputElement>("class-title");
-const roomCode = must<HTMLInputElement>("room-code");
 const setupNote = must<HTMLElement>("setup-note");
 const syncDetail = must<HTMLElement>("sync-detail");
-const firebaseNote = must<HTMLElement>("firebase-note");
-const connectFirebaseBtn = must<HTMLButtonElement>("connect-firebase");
-const firebaseSource = must<HTMLElement>("firebase-source");
-const firebasePaste = must<HTMLTextAreaElement>("firebase-paste");
-const clearFirebaseBtn = must<HTMLButtonElement>("clear-firebase");
 const pasteManage = must<HTMLTextAreaElement>("paste-manage");
 const addNameInput = must<HTMLInputElement>("add-name");
 const nameFilter = must<HTMLInputElement>("name-filter");
@@ -102,8 +95,6 @@ let calmTimer = 0;
 let ambientIndex = -1;
 let floaterOffset = 0;
 let draftNames: string[] = [];
-let usingEnvConfig = false;
-let firebaseAlert = "";
 
 boot();
 
@@ -111,17 +102,9 @@ function boot(): void {
   mountConfetti(must<HTMLCanvasElement>("fx"));
   paintStars();
   paintBulbs();
-  firebasePaste.value = loadSavedConfigText();
   bind();
   render();
-  const env = configFromEnv();
-  const saved = parseFirebaseConfig(loadSavedConfigText());
-  if (env) {
-    usingEnvConfig = true;
-    void store.connect(env);
-  } else if (saved) {
-    void store.connect(saved);
-  }
+  void store.connect(configFromEnv());
 }
 
 function bind(): void {
@@ -183,19 +166,6 @@ function bind(): void {
     const title = classTitle.value.trim().slice(0, 79) || "Classroom Raffle";
     store.commit({ ...store.data, title });
   });
-  must<HTMLButtonElement>("save-room").addEventListener("click", () => void saveRoom());
-  must<HTMLButtonElement>("copy-room").addEventListener("click", () => void copyRoom());
-  connectFirebaseBtn.addEventListener("click", () => void connectFirebase());
-  clearFirebaseBtn.addEventListener("click", () => {
-    if (usingEnvConfig) {
-      note("This site is using the Netlify Firebase settings. Remove those environment variables to disconnect.");
-      return;
-    }
-    clearSavedConfig();
-    firebasePaste.value = "";
-    store.stopSync();
-    note("Firebase is off. Names stay on this browser.");
-  });
   must<HTMLButtonElement>("save-pin").addEventListener("click", () => void savePin());
   must<HTMLButtonElement>("clear-pin").addEventListener("click", () => void clearPin());
   must<HTMLButtonElement>("use-local").addEventListener("click", () => store.useBrowserList());
@@ -228,22 +198,13 @@ function render(): void {
   demoBanner.hidden = !data.demo;
   conflict.hidden = !store.conflict;
   conflictText.textContent = store.conflict
-    ? "Firebase already has a different class list for this room. You're seeing the shared list. You can switch to the list that was on this browser."
+    ? "The shared list is different from the list saved on this browser. You're seeing the shared list. You can switch to the list that was on this browser."
     : "";
   syncPill.dataset.state = store.sync;
   syncPill.textContent = store.sync === "live" ? "Synced" : store.sync === "connecting" ? "Connecting…" : store.sync === "error" ? "Sync problem" : "This browser";
   syncPill.title = store.syncMessage;
   syncDetail.textContent = store.syncMessage;
-  firebaseNote.textContent = firebaseAlert || store.syncMessage;
-  firebaseNote.classList.toggle("is-error", store.sync === "error" || Boolean(firebaseAlert));
-  connectFirebaseBtn.textContent = store.sync === "connecting" ? "Connecting…" : "Connect Firebase";
-  connectFirebaseBtn.disabled = store.sync === "connecting";
-  firebaseSource.textContent = usingEnvConfig
-    ? "Using the Firebase settings from Netlify."
-    : loadSavedConfigText()
-      ? "Using the Firebase config saved in this browser."
-      : "No Firebase config yet. The raffle still works on this browser.";
-  clearFirebaseBtn.hidden = usingEnvConfig;
+  syncDetail.classList.toggle("is-error", store.sync === "error");
   muteBtn.textContent = audio.muted ? "Sound off" : "Sound on";
   muteBtn.setAttribute("aria-pressed", audio.muted ? "true" : "false");
   countLine.textContent = countLabel(data.names.length, data.winners.length);
@@ -262,7 +223,6 @@ function render(): void {
       : data.names.length ? "In the hat" : "The hat is empty";
   }
   if (document.activeElement !== classTitle) classTitle.value = data.title;
-  if (document.activeElement !== roomCode) roomCode.value = store.room;
   renderPicked();
   if (manage.open) renderLists();
   if (phase === "idle" && data.names.length && !document.hidden) {
@@ -502,53 +462,6 @@ function addTypedName(): void {
   store.commit(next);
   addNameInput.value = "";
   note("");
-}
-
-async function saveRoom(): Promise<void> {
-  const room = await store.useRoom(roomCode.value);
-  if (!room) {
-    note("Use 3 to 40 letters or numbers. Spaces become dashes.");
-    return;
-  }
-  note(`Room code is ${room}. Use this same code on another computer to share the list.`);
-}
-
-async function copyRoom(): Promise<void> {
-  try {
-    await navigator.clipboard.writeText(store.room);
-    note("Room code copied.");
-  } catch {
-    note(`Room code: ${store.room}`);
-  }
-}
-
-async function connectFirebase(): Promise<void> {
-  if (usingEnvConfig) {
-    showFirebaseNote("Netlify is already supplying the Firebase config.");
-    return;
-  }
-  const config = parseFirebaseConfig(firebasePaste.value);
-  if (!config) {
-    showFirebaseNote("Paste the firebaseConfig block from Project settings → Your apps.");
-    return;
-  }
-  firebaseAlert = "";
-  saveConfigText(JSON.stringify(config));
-  render();
-  try {
-    await store.connect(config);
-  } catch (err) {
-    showFirebaseNote(friendlyFirebaseError(err));
-    return;
-  }
-  render();
-  firebaseNote.scrollIntoView({ block: "nearest" });
-}
-
-function showFirebaseNote(message: string): void {
-  firebaseAlert = message;
-  render();
-  firebaseNote.scrollIntoView({ block: "nearest" });
 }
 
 async function savePin(): Promise<void> {

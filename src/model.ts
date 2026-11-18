@@ -11,9 +11,15 @@ export type RaffleData = {
   updatedAt: number;
 };
 
+export const FIXED_ROOM = "bems-assembly";
 export const ROOM_KEY = "starlight-room";
+/** Earlier builds stored a pasted Firebase config here. It is ignored. */
 export const CONFIG_KEY = "starlight-firebase-config";
 export const PIN_KEY = "starlight-pin";
+
+export function raffleStorageKey(room: string): string {
+  return `starlight-raffle:v1:${room}`;
+}
 
 export function emptyData(): RaffleData {
   return {
@@ -90,15 +96,6 @@ export function normalizeRoom(input: string): string | null {
   if (room.length < 3 || room.length > 40) return null;
   if (!/^[a-z0-9-]+$/.test(room)) return null;
   return room;
-}
-
-export function createRoomCode(): string {
-  const alphabet = "abcdefghjkmnpqrstuvwxyz23456789";
-  const bytes = new Uint8Array(8);
-  crypto.getRandomValues(bytes);
-  let body = "";
-  for (const byte of bytes) body += alphabet[byte % alphabet.length];
-  return `class-${body}`;
 }
 
 function snapshot(data: RaffleData) {

@@ -37,43 +37,28 @@ The optional smartboard lock does not block the draw. It blocks setup, undo, and
 
 The live site is [bems-raffle.netlify.app](https://bems-raffle.netlify.app/). The code is in [github.com/alanpark2/raffle](https://github.com/alanpark2/raffle).
 
-## You do not need Firebase
+## Shared list
 
-The spin, the slowdown, the lights, the confetti, and the fanfare all run on the computer that is open in the browser. Nothing about the draw waits on the internet, so Firebase will not make it faster, and skipping it will not make it unreliable.
+The spin, the slowdown, the lights, the confetti, and the fanfare all run on the computer that is open in the browser. Nothing about the draw waits on the internet. Firebase only syncs the class list.
 
-The class list is saved in that browser. Close the tab, come back later, and the names are still there. A practice draw and a real draw both work offline.
+Anyone who opens [bems-raffle.netlify.app](https://bems-raffle.netlify.app/) sees the same list. There is no room code and nothing to paste. On the computer that already has the names, refresh once so that roster uploads. The presentation computer only needs the site address. Anyone with that address can see and change the list.
 
-To move the raffle to another computer, open **Names & setup** and press **Save a copy**. That downloads `bems-raffle.json` with the names still in the hat, the winners, and anyone sitting out. On the other computer, open [bems-raffle.netlify.app](https://bems-raffle.netlify.app/) and drop that file in. No account and no internet are required for the drawing itself. Email, AirDrop, or a USB drive can carry the file.
+The list is also saved in the browser, so a practice draw and a real draw still work if the network blips. **Save a copy** downloads `bems-raffle.json` when you want a file backup. Drop that file on the site to open it.
 
-Firebase is only useful if you want the same list on a second computer. If you ever set it up, stay on the free Spark plan and do not turn on billing. The raffle still never waits on the network during a draw.
-
-If you later want that second computer:
-
-1. Go to [Firebase console](https://console.firebase.google.com/) → **Add project**. Analytics can stay off.
-2. **Build → Firestore Database → Create database**. Choose a region near the school. Start in production mode.
-3. **Build → Authentication → Sign-in method → Anonymous → Enable**.
-4. **Project settings → Your apps → Web** (`</>`). Register the app and copy the `firebaseConfig` block.
-5. **Firestore → Rules**. Paste `firestore.rules` from this project and publish.
-6. In the raffle, open **Names & setup**, paste that config, and press **Connect Firebase**.
-
-Leave the room code as the long `class-…` value, and use that same code on every computer that should share the list. Anyone who has the published site **and** the room code can open that list, so don't post the code. Kid names live in your Firebase project, not in this repository.
-
-Spark's free quota is far above one class: the app writes one document per change, not one per name.
-
-To bake the config into a Netlify deploy instead of pasting it, add the variables from `.env.example` in **Site settings → Environment variables** and redeploy. Those values override a pasted config.
+Stay on the free Spark plan and do not turn on billing. Spark's free quota is far above one assembly: the app writes one document per change, not one per name. Kid names live in the Firebase project, not in this repository.
 
 ## Netlify
 
 [bems-raffle.netlify.app](https://bems-raffle.netlify.app/) builds from `main` on GitHub. Build command: `npm run build`. Publish directory: `dist`. `netlify.toml` sets Node 20.
 
-Leave the `VITE_FIREBASE_*` variables empty. You do not need them.
+The public Firebase web config is already included. Set the `VITE_FIREBASE_*` variables only to override it, then redeploy. Leave them empty to use the built-in config.
 
 The fanfare is generated in the browser. There is no music file to license or download.
 
 ## Scripts
 
 ```bash
-npm test        # name parsing, the draw, and the Firebase paste box
+npm test        # name parsing, the draw, and the shared list
 npm run build   # static site in dist/
 npm run preview # serve that build locally
 ```
