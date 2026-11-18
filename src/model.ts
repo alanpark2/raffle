@@ -41,8 +41,39 @@ export function sanitizeData(input: unknown): RaffleData {
   };
 }
 
+export const RAFFLE_FILE_KIND = "bems-raffle";
+
 export function hasPeople(data: RaffleData): boolean {
   return data.names.length + data.winners.length + data.out.length > 0;
+}
+
+export function raffleFile(data: RaffleData): string {
+  return JSON.stringify(
+    {
+      kind: RAFFLE_FILE_KIND,
+      version: 1,
+      title: data.title,
+      names: data.names,
+      winners: data.winners,
+      out: data.out,
+      demo: data.demo,
+    },
+    null,
+    2,
+  );
+}
+
+export function readSavedRaffle(text: string): RaffleData | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+  if ((parsed as { kind?: unknown }).kind !== RAFFLE_FILE_KIND) return null;
+  const data = sanitizeData(parsed);
+  return hasPeople(data) ? data : null;
 }
 
 export function sameShow(a: RaffleData, b: RaffleData): boolean {

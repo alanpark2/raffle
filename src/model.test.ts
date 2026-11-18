@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { emptyData, normalizeRoom, sanitizeData } from "./model";
+import { emptyData, normalizeRoom, raffleFile, readSavedRaffle, sanitizeData } from "./model";
 
 describe("normalizeRoom", () => {
   it("makes a room code safe for Firebase", () => {
@@ -33,5 +33,30 @@ describe("sanitizeData", () => {
 
   it("returns an empty show for garbage", () => {
     expect(sanitizeData(null)).toEqual(emptyData());
+  });
+});
+
+describe("saved raffle file", () => {
+  it("round-trips the hat, the winners, and kids sitting out", () => {
+    const data = {
+      ...emptyData(),
+      title: "Room 4",
+      names: ["Ava Martinez"],
+      winners: [{ name: "Noah Patel", at: 5 }],
+      out: ["Mia Chen"],
+    };
+    const opened = readSavedRaffle(raffleFile(data));
+    expect(opened).toMatchObject({
+      title: "Room 4",
+      names: ["Ava Martinez"],
+      winners: [{ name: "Noah Patel", at: 5 }],
+      out: ["Mia Chen"],
+    });
+  });
+
+  it("does not treat a class list as a saved raffle", () => {
+    expect(readSavedRaffle('["Ava Martinez"]')).toBeNull();
+    expect(readSavedRaffle('{"students":[{"name":"Mia Chen"}]}')).toBeNull();
+    expect(readSavedRaffle("{")).toBeNull();
   });
 });

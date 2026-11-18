@@ -12,7 +12,7 @@ import { PARTY_COLORS, colorFor } from "./color";
 import { celebrateBurst, mountConfetti } from "./confetti";
 import { DEMO_NAMES } from "./demo";
 import { configFromEnv, parseFirebaseConfig } from "./firebaseConfig";
-import { PIN_KEY, hasPeople } from "./model";
+import { PIN_KEY, hasPeople, raffleFile, readSavedRaffle, sameShow } from "./model";
 import { dedupeNames, flipFirstLast, namesFromFile, namesFromText, type ParseResult } from "./parseNames";
 import {
   addName,
@@ -163,6 +163,7 @@ function bind(): void {
   resetStage.addEventListener("click", () => void restoreAll());
   must<HTMLButtonElement>("reset-btn").addEventListener("click", () => void restoreAll());
   must<HTMLButtonElement>("download-btn").addEventListener("click", downloadNames);
+  must<HTMLButtonElement>("save-copy-btn").addEventListener("click", saveCopy);
   must<HTMLButtonElement>("add-name-btn").addEventListener("click", addTypedName);
   addNameInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
@@ -236,6 +237,7 @@ function render(): void {
   muteBtn.setAttribute("aria-pressed", audio.muted ? "true" : "false");
   countLine.textContent = countLabel(data.names.length, data.winners.length);
   drawBtn.disabled = phase === "spinning" || data.names.length === 0;
+  must<HTMLButtonElement>("save-copy-btn").disabled = !hasPeople(data);
   testBtn.disabled = drawBtn.disabled;
   drawBtn.textContent = data.names.length === 0 ? "Hat is empty" : data.winners.length || phase === "celebrating" ? "Draw the next name" : "Draw a winner";
   ribbon.hidden = phase !== "celebrating";
@@ -363,11 +365,42 @@ async function handleFile(file: File): Promise<void> {
     openPreview({ names: [], notes: ["That file is larger than 5 MB. Export just the names and try again."], duplicates: [] });
     return;
   }
+  const ext = (file.name.split(".").pop() || "").toLowerCase();
+  if (ext === "json" || file.type.includes("json")) {
+    const text = await file.text();
+    const saved = readSavedRaffle(text);
+    if (saved) {
+      await restoreSaved(saved);
+      return;
+    }
+    openPreview(namesFromText(text, "json"));
+    return;
+  }
   try {
     openPreview(await namesFromFile(file));
   } catch {
     openPreview({ names: [], notes: ["Could not read that file. Save it as CSV, or paste the names."], duplicates: [] });
   }
+}
+
+async function restoreSaved(saved: ReturnType<typeof readSavedRaffle>): Promise<void> {
+  if (!saved) return;
+  if (hasPeople(store.data) && !store.data.demo && !sameShow(store.data, saved)) {
+    const ok = await confirmAction(
+      "Open this saved raffle?",
+      "This replaces the list on this computer, including anyone already picked.",
+      "Open the saved raffle",
+    );
+    if (!ok) return;
+  }
+  store.commit({ ...saved, demo: saved.demo });
+  phase = "idle";
+  ambientOn = false;
+  document.body.classList.remove("is-celebrating");
+  manage.close();
+  preview.close();
+  note(`Opened the saved raffle. ${saved.names.length} names are in the hat.`);
+  render();
 }
 
 function openPreview(result: ParseResult): void {
@@ -628,10 +661,22 @@ async function toggleFull(): Promise<void> {
 }
 
 function downloadNames(): void {
-  const blob = new Blob([`${store.data.names.join("\n")}\n`], { type: "text/plain" });
+  downloadBlob(new Blob([`${store.data.names.join("\n")}\n`], { type: "text/plain" }), "raffle-names.txt");
+}
+
+function saveCopy(): void {
+  if (!hasPeople(store.data)) {
+    note("Add names before saving a copy.");
+    return;
+  }
+  downloadBlob(new Blob([raffleFile(store.data)], { type: "application/json" }), "bems-raffle.json");
+  note("Saved bems-raffle.json. On the other computer, open BEMS Raffle and drop that file in.");
+}
+
+function downloadBlob(blob: Blob, filename: string): void {
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = "raffle-names.txt";
+  link.download = filename;
   link.click();
   URL.revokeObjectURL(link.href);
 }

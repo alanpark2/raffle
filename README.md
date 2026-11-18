@@ -43,6 +43,8 @@ The spin, the slowdown, the lights, the confetti, and the fanfare all run on the
 
 The class list is saved in that browser. Close the tab, come back later, and the names are still there. A practice draw and a real draw both work offline.
 
+To move the raffle to another computer, open **Names & setup** and press **Save a copy**. That downloads `bems-raffle.json` with the names still in the hat, the winners, and anyone sitting out. On the other computer, open [bems-raffle.netlify.app](https://bems-raffle.netlify.app/) and drop that file in. No account and no internet are required for the drawing itself. Email, AirDrop, or a USB drive can carry the file.
+
 Firebase is only useful if you want the same list on a second computer. If you ever set it up, stay on the free Spark plan and do not turn on billing. The raffle still never waits on the network during a draw.
 
 If you later want that second computer:

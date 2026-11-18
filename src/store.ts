@@ -20,7 +20,7 @@ export class RaffleStore {
   room: string;
   data: RaffleData;
   sync: SyncState = "local";
-  syncMessage = "Saved on this browser";
+  syncMessage = "Saved on this browser. Use Save a copy to open it on another computer.";
   conflict: RaffleData | null = null;
   spinning = false;
   private config: FirebaseConfig | null = null;
@@ -87,7 +87,7 @@ export class RaffleStore {
     this.allowWrites = false;
     this.config = null;
     this.sync = "local";
-    this.syncMessage = "Saved on this browser";
+    this.syncMessage = "Saved on this browser. Use Save a copy to open it on another computer.";
     this.conflict = null;
     this.onChange();
   }

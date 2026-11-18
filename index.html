@@ -51,9 +51,9 @@
           <div class="empty-card">
             <p class="kicker">The hat is empty</p>
             <h2>Drop in the class list</h2>
-            <p class="lede">CSV, Excel, text, or JSON. Odd columns can be fixed before anyone is drawn. A practice draw never removes a name.</p>
+            <p class="lede">CSV, Excel, text, or JSON. Odd columns can be fixed before anyone is drawn. A practice draw never removes a name. A saved BEMS Raffle file opens the whole show, including anyone already picked.</p>
             <label class="dropzone" id="dropzone" for="file">
-              <span>Drop the file here, or click to browse</span>
+              <span>Drop a class list or a saved raffle here</span>
             </label>
             <textarea id="paste" class="paste" placeholder="Or paste names here, one per line"></textarea>
             <div class="row">
@@ -110,7 +110,7 @@
           <h2 id="manage-title">Names &amp; setup</h2>
           <button class="btn-ghost" id="close-manage" type="button">Close</button>
         </div>
-        <p class="hint">The big gold button really draws and removes that name. Practice draw is the rehearsal. The show runs on this computer, so it stays fast with no internet. Names are saved in this browser.</p>
+        <p class="hint">The big gold button really draws and removes that name. Practice draw is the rehearsal. The show runs on this computer, so it stays fast with no internet. Names are saved in this browser. To run it later on a different computer, press <strong>Save a copy</strong> and open that file over there.</p>
         <p class="sync-detail" id="sync-detail"></p>
         <p class="error" id="setup-note"></p>
 
@@ -119,9 +119,10 @@
           <div class="stack">
             <label>Room name <input id="class-title" type="text" maxlength="79" /></label>
             <div class="row">
-              <button class="btn-mint" id="upload-btn" type="button">Upload a file</button>
+              <button class="btn-mint" id="save-copy-btn" type="button">Save a copy</button>
+              <button class="btn-ghost" id="upload-btn" type="button">Open a file</button>
               <button class="btn-ghost" id="demo-manage" type="button">Load demo names</button>
-              <button class="btn-ghost" id="download-btn" type="button">Download remaining</button>
+              <button class="btn-ghost" id="download-btn" type="button">Download names only</button>
               <button class="btn-ghost" id="reset-btn" type="button">Put everyone back</button>
             </div>
             <textarea id="paste-manage" class="paste" placeholder="Paste names, one per line"></textarea>
