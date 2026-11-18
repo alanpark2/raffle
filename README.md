@@ -22,13 +22,13 @@ Open the local address Vite prints. For a projector, use **Full screen**.
 
 No account is required. The list is saved in the browser. **Try demo names** loads a fake class so you can rehearse before the real file arrives. The gold banner stays up until you replace those names.
 
-`examples/` has a CSV, a text file, a JSON file, and a last-name-first CSV. Excel workbooks (`.xlsx`), tab-separated files, semicolon files, and a pasted list work too. If a file is the older `.xls` format, save it as `.xlsx` or CSV first. After upload, check the names. **Swap first and last word** if they came out backwards. Repeated names are kept, in case two kids share one.
+`examples/` has a CSV, a text file, a JSON file, and a last-name-first CSV. Excel workbooks (`.xlsx`), tab-separated files, semicolon files, and a pasted list work too. If a file is the older `.xls` format, save it as `.xlsx` or CSV first. After upload, check the names. **Swap first and last word** if they came out backwards. Repeated names are kept. On a nomination form, each extra entry is another chance. Winning removes every copy of that name, so a student can win only once.
 
 ## Real draw vs practice
 
 | Button | What the class sees | What happens to the name |
 | --- | --- | --- |
-| Draw a winner | Lights, slowdown, confetti, fanfare | Removed from the hat |
+| Draw a winner | Lights, slowdown, confetti, fanfare | Every copy of that name leaves the hat |
 | Practice draw | The same show, marked Practice | Stays in the hat |
 
 Put a winner back from the stage button (it asks for the lock code if you set one) or from **Names & setup**. **Sit out** takes an absent kid out without a prize. **Put everyone back** refills the hat.

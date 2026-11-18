@@ -392,8 +392,8 @@ function finalize(candidates: string[], notes: string[], repeats: "share" | "tic
     const extra = names.length - seen.size;
     notes.push(
       extra === 1
-        ? "1 extra nomination was kept as its own ticket, so that student has another chance."
-        : `${extra} extra nominations were kept as their own tickets. A name entered more often has more chances.`,
+        ? "1 extra nomination was kept as its own ticket, so that student has another chance. A win removes every copy."
+        : `${extra} extra nominations were kept as their own tickets. A name entered more often has more chances, and a win removes every copy.`,
     );
   } else if (duplicates.length) {
     const sample = duplicates.slice(0, 4).join(", ");

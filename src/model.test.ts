@@ -42,14 +42,14 @@ describe("saved raffle file", () => {
       ...emptyData(),
       title: "Room 4",
       names: ["Ava Martinez"],
-      winners: [{ name: "Noah Patel", at: 5 }],
+      winners: [{ name: "Noah Patel", at: 5, entries: ["Noah Patel", "Noah Patel"] }],
       out: ["Mia Chen"],
     };
     const opened = readSavedRaffle(raffleFile(data));
     expect(opened).toMatchObject({
       title: "Room 4",
       names: ["Ava Martinez"],
-      winners: [{ name: "Noah Patel", at: 5 }],
+      winners: [{ name: "Noah Patel", at: 5, entries: ["Noah Patel", "Noah Patel"] }],
       out: ["Mia Chen"],
     });
   });

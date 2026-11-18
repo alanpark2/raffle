@@ -55,13 +55,22 @@ describe("stepDelay", () => {
 });
 
 describe("hat changes", () => {
-  it("removes one real winner and leaves a practice draw untouched", () => {
+  it("removes every copy of a real winner and leaves a practice draw untouched", () => {
     const data = { ...emptyData(), names: ["Ava Martinez", "Ava Martinez", "Noah Patel"] };
     const practice = applyDraw(data, "Ava Martinez", "test");
     expect(practice).toBe(data);
     const drawn = applyDraw(data, "Ava Martinez", "real", 50);
-    expect(drawn.names).toEqual(["Ava Martinez", "Noah Patel"]);
-    expect(drawn.winners).toEqual([{ name: "Ava Martinez", at: 50 }]);
+    expect(drawn.names).toEqual(["Noah Patel"]);
+    expect(drawn.winners).toEqual([{ name: "Ava Martinez", at: 50, entries: ["Ava Martinez", "Ava Martinez"] }]);
+  });
+
+  it("gives a repeated name more tickets, then takes them all out on a win", () => {
+    const data = { ...emptyData(), names: ["Bobby", "Ava", "bobby", "Noah", "Bobby"] };
+    const drawn = applyDraw(data, "Bobby", "real", 20);
+    expect(drawn.names).toEqual(["Ava", "Noah"]);
+    expect(drawn.winners).toEqual([{ name: "Bobby", at: 20, entries: ["Bobby", "bobby", "Bobby"] }]);
+    expect(putBack(drawn, "Bobby").names).toEqual(["Ava", "Noah", "Bobby", "bobby", "Bobby"]);
+    expect(resetHat(drawn).names).toEqual(["Ava", "Noah", "Bobby", "bobby", "Bobby"]);
   });
 
   it("puts a winner or a sitting-out student back", () => {

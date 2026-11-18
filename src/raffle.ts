@@ -50,14 +50,12 @@ export function stepDelay(index: number, total: number): number {
 
 export function applyDraw(data: RaffleData, winner: string, mode: DrawMode, now = Date.now()): RaffleData {
   if (mode === "test") return data;
-  const index = data.names.indexOf(winner);
-  if (index < 0) return data;
-  const names = data.names.slice();
-  names.splice(index, 1);
+  const entries = data.names.filter((name) => sameStudent(name, winner));
+  if (!entries.length) return data;
   return {
     ...data,
-    names,
-    winners: [{ name: winner, at: now }, ...data.winners],
+    names: data.names.filter((name) => !sameStudent(name, winner)),
+    winners: [{ name: winner, at: now, entries }, ...data.winners],
   };
 }
 
@@ -67,9 +65,8 @@ export function putBack(data: RaffleData, name: string): RaffleData {
   if (winIndex < 0 && outIndex < 0) return data;
   const winners = data.winners.slice();
   const out = data.out.slice();
-  if (winIndex >= 0) winners.splice(winIndex, 1);
-  else out.splice(outIndex, 1);
-  return { ...data, names: [...data.names, name], winners, out };
+  const restored = winIndex >= 0 ? ticketsFor(winners.splice(winIndex, 1)[0]) : out.splice(outIndex, 1);
+  return { ...data, names: [...data.names, ...restored], winners, out };
 }
 
 export function sitOut(data: RaffleData, index: number): RaffleData {
@@ -80,13 +77,21 @@ export function sitOut(data: RaffleData, index: number): RaffleData {
 }
 
 export function resetHat(data: RaffleData): RaffleData {
-  const restored = [...data.winners].reverse().map((winner) => winner.name);
+  const restored = [...data.winners].reverse().flatMap((winner) => ticketsFor(winner));
   return {
     ...data,
     names: [...data.names, ...restored, ...data.out],
     winners: [],
     out: [],
   };
+}
+
+function sameStudent(a: string, b: string): boolean {
+  return a.toLocaleLowerCase() === b.toLocaleLowerCase();
+}
+
+function ticketsFor(winner: RaffleData["winners"][number]): string[] {
+  return winner.entries?.length ? winner.entries : [winner.name];
 }
 
 export function replaceHat(data: RaffleData, names: string[], clearWinners: boolean): RaffleData {

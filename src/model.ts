@@ -1,6 +1,6 @@
 import { cleanName } from "./parseNames";
 
-export type Winner = { name: string; at: number };
+export type Winner = { name: string; at: number; entries?: string[] };
 
 export type RaffleData = {
   title: string;
@@ -136,7 +136,12 @@ function winnerList(value: unknown): Winner[] {
     if (typeof record.name !== "string") continue;
     const name = cleanName(record.name);
     if (!name) continue;
-    winners.push({ name, at: typeof record.at === "number" ? record.at : 0 });
+    const entries = stringList(record.entries);
+    winners.push({
+      name,
+      at: typeof record.at === "number" ? record.at : 0,
+      ...(entries.length ? { entries } : {}),
+    });
   }
   return winners;
 }
