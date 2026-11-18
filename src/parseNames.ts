@@ -149,19 +149,25 @@ export function namesFromRows(input: string[][]): ParseResult {
   let mode: RowMode = { kind: "plain" };
   if (looksLikeHeader(rows[0])) {
     const header = rows[0];
-    const first = header.findIndex((cell) => FIRST_COL.test(cell));
-    const last = header.findIndex((cell) => LAST_COL.test(cell));
-    const named = header.findIndex((cell) => NAME_COL.test(cell));
+    const first = header.findIndex((cell) => FIRST_COL.test(normalizeHeader(cell)));
+    const last = header.findIndex((cell) => LAST_COL.test(normalizeHeader(cell)));
+    const nameIndexes = header
+      .map((cell, index) => ({ cell, index }))
+      .filter(({ cell }) => isNameHeader(cell))
+      .map(({ index }) => index);
     data = rows.slice(1);
     if (!data.length) return finalize([], ["That file has a header but no names under it."]);
+    if (nameIndexes.length > 1) {
+      return namesFromColumns(data, nameIndexes, notes);
+    }
     if (first >= 0 && last >= 0) {
       mode = { kind: "first-last", first, last };
       notes.push("Used the first name and last name columns.");
-    } else if (named >= 0) {
-      mode = { kind: "column", index: named };
-      notes.push(`Used the “${header[named]}” column.`);
+    } else if (nameIndexes.length === 1) {
+      mode = { kind: "column", index: nameIndexes[0] };
+      notes.push(`Used the “${header[nameIndexes[0]]}” column.`);
     } else {
-      const fallback = header.findIndex((cell) => cell && !META_COL.test(cell));
+      const fallback = header.findIndex((cell) => cell && !isMetaHeader(cell));
       if (fallback >= 0) {
         mode = { kind: "column", index: fallback };
         notes.push(`Used the “${header[fallback]}” column.`);
@@ -269,8 +275,65 @@ function stringField(record: Record<string, unknown>, keys: string[]): string {
   return "";
 }
 
+function namesFromColumns(rows: string[][], indexes: number[], notes: string[]): ParseResult {
+  notes.push(
+    indexes.length === 1
+      ? "Used 1 name column."
+      : `Used ${indexes.length} name columns. The timestamp was skipped.`,
+  );
+  const names: string[] = [];
+  const seen = new Set<string>();
+  let repeated = 0;
+  for (const row of rows) {
+    for (const index of indexes) {
+      const name = cleanName(row[index] || "");
+      if (!name) continue;
+      const key = name.toLocaleLowerCase();
+      if (seen.has(key)) {
+        repeated += 1;
+        continue;
+      }
+      seen.add(key);
+      names.push(name);
+    }
+  }
+  if (repeated > 0) {
+    notes.push(
+      `${repeated === 1 ? "1 repeated nomination was" : `${repeated} repeated nominations were`} combined, so each kid is in the hat once.`,
+    );
+  }
+  return finalize(names, notes);
+}
+
+function normalizeHeader(cell: string): string {
+  return cell
+    .trim()
+    .replace(/:+$/g, "")
+    .trim()
+    .replace(/\s+#\s*\d+$/g, "")
+    .replace(/\s+\d+$/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function isNameHeader(cell: string): boolean {
+  const label = normalizeHeader(cell);
+  return NAME_COL.test(label) || /^(nominee|nominee name|nomination)$/.test(label);
+}
+
+function isMetaHeader(cell: string): boolean {
+  const label = normalizeHeader(cell);
+  return META_COL.test(label) || /^(timestamp|email address|score|points)$/.test(label);
+}
+
 function looksLikeHeader(cells: string[]): boolean {
-  return cells.some((cell) => NAME_COL.test(cell) || FIRST_COL.test(cell) || LAST_COL.test(cell) || META_COL.test(cell));
+  return cells.some(
+    (cell) =>
+      isNameHeader(cell) ||
+      FIRST_COL.test(normalizeHeader(cell)) ||
+      LAST_COL.test(normalizeHeader(cell)) ||
+      isMetaHeader(cell),
+  );
 }
 
 function extractName(row: string[], mode: RowMode): { name: string; flipped: boolean } | null {

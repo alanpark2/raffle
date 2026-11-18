@@ -63,6 +63,21 @@ describe("namesFromText", () => {
     expect(result.notes[0]).toMatch(/empty/i);
   });
 
+  it("collects every name column from a Google Form and keeps each kid once", () => {
+    const result = namesFromText(
+      [
+        "Timestamp,Student Name #1: ,Student Name #2: ,Student Name #3: ",
+        "11/11/2026 11:10:09,Ava Martinez,Noah Patel,",
+        "11/11/2026 11:27:20,Ava Martinez,Mia Chen,Noah Patel",
+        "11/11/2026 11:43:35,Liam Okafor,,",
+      ].join("\n"),
+    );
+    expect(result.names).toEqual(["Ava Martinez", "Noah Patel", "Mia Chen", "Liam Okafor"]);
+    expect(result.notes.some((note) => /3 name columns/i.test(note))).toBe(true);
+    expect(result.notes.some((note) => /repeated nominations were combined/i.test(note))).toBe(true);
+    expect(result.names.join(" ")).not.toMatch(/timestamp|11\/11\/2026/i);
+  });
+
   it("ignores a header with no students", () => {
     const result = namesFromText("Name,Grade\n");
     expect(result.names).toEqual([]);
