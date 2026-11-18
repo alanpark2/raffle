@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
-    <meta name="description" content="A colorful classroom raffle. Names spin, the lights slow down, and one winner gets the fanfare." />
-    <title>Starlight Raffle</title>
+    <meta name="description" content="BEMS Raffle. Names spin, the lights slow down, and one winner gets the fanfare." />
+    <title>BEMS Raffle</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
   <body>
@@ -30,7 +30,7 @@
           <div class="logo" aria-hidden="true">★</div>
           <div>
             <p class="eyebrow" id="room-label">Classroom Raffle</p>
-            <h1>Starlight Raffle</h1>
+            <h1>BEMS Raffle</h1>
           </div>
         </div>
         <div class="top-actions">
@@ -82,7 +82,7 @@
               <div class="portal-face">
                 <p id="ribbon" class="ribbon" hidden>Winner</p>
                 <p id="caption" class="caption">In the hat</p>
-                <h2 id="hero-name" class="hero-name">Starlight</h2>
+                <h2 id="hero-name" class="hero-name">BEMS</h2>
                 <p id="count-line" class="count-line"></p>
               </div>
             </div>
@@ -110,7 +110,7 @@
           <h2 id="manage-title">Names &amp; setup</h2>
           <button class="btn-ghost" id="close-manage" type="button">Close</button>
         </div>
-        <p class="hint">The big gold button really draws and removes that name. Practice draw is the rehearsal. Everything here is saved on this browser, and in Firebase too once it is connected.</p>
+        <p class="hint">The big gold button really draws and removes that name. Practice draw is the rehearsal. The show runs on this computer, so it stays fast with no internet. Names are saved in this browser.</p>
         <p class="sync-detail" id="sync-detail"></p>
         <p class="error" id="setup-note"></p>
 
@@ -141,8 +141,8 @@
         </section>
 
         <section class="panel">
-          <h3>Firebase, free plan</h3>
-          <p class="hint">Optional. Spark plan only — do not turn on billing. Create a Firebase project, enable Firestore and Anonymous sign-in, publish <code>firestore.rules</code>, then paste the web config. The room code is the key to the list, so keep the long one.</p>
+          <h3>Firebase, only for a second computer</h3>
+          <p class="hint">Skip this. It does not make the draw faster or more reliable. It only copies the name list to another computer. If you do use it, stay on the free Spark plan and do not turn on billing. Enable Firestore and Anonymous sign-in, publish <code>firestore.rules</code>, then paste the web config. The room code is the key to the list.</p>
           <p class="sync-detail" id="firebase-source"></p>
           <div class="stack">
             <label>Room code <input id="room-code" type="text" maxlength="40" autocomplete="off" /></label>
@@ -217,7 +217,7 @@
 
     <input id="file" class="file-input" type="file" accept=".csv,.txt,.tsv,.json,.xlsx,.xls,text/csv,text/plain,application/json" />
     <div id="live" class="sr-only" aria-live="assertive"></div>
-    <noscript><p class="lede">Starlight Raffle needs JavaScript for the drawing.</p></noscript>
+    <noscript><p class="lede">BEMS Raffle needs JavaScript for the drawing.</p></noscript>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

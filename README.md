@@ -1,4 +1,4 @@
-# Starlight Raffle
+# BEMS Raffle
 
 A full-screen classroom raffle. Drop in a class list, press **Draw a winner**, and names race across the stage until the lights slow down. The chosen kid gets confetti, rainbow swirls, stage lights, and a built-in fanfare. That name then leaves the hat.
 
@@ -35,11 +35,17 @@ Put a winner back from the stage button (it asks for the lock code if you set on
 
 The optional smartboard lock does not block the draw. It blocks setup, undo, and reset, so a student at the board cannot wipe the list. The code stays on that browser only. If it is forgotten, clear this site's data for the page.
 
-## Free Firebase sync
+The live site is [bems-raffle.netlify.app](https://bems-raffle.netlify.app/). The code is in [github.com/alanpark2/raffle](https://github.com/alanpark2/raffle).
 
-Firebase is optional. Use the **Spark** plan only. Do not upgrade and do not turn on billing. Cloud Functions are not used.
+## You do not need Firebase
 
-The raffle itself never waits on the network. Firebase stores one small document per room (the names and who has already won) and keeps a copy on the computer, so the next visit opens fast and a second computer can share the list.
+The spin, the slowdown, the lights, the confetti, and the fanfare all run on the computer that is open in the browser. Nothing about the draw waits on the internet, so Firebase will not make it faster, and skipping it will not make it unreliable.
+
+The class list is saved in that browser. Close the tab, come back later, and the names are still there. A practice draw and a real draw both work offline.
+
+Firebase is only useful if you want the same list on a second computer. If you ever set it up, stay on the free Spark plan and do not turn on billing. The raffle still never waits on the network during a draw.
+
+If you later want that second computer:
 
 1. Go to [Firebase console](https://console.firebase.google.com/) → **Add project**. Analytics can stay off.
 2. **Build → Firestore Database → Create database**. Choose a region near the school. Start in production mode.
@@ -54,23 +60,11 @@ Spark's free quota is far above one class: the app writes one document per chang
 
 To bake the config into a Netlify deploy instead of pasting it, add the variables from `.env.example` in **Site settings → Environment variables** and redeploy. Those values override a pasted config.
 
-## Put it on Netlify
+## Netlify
 
-Netlify connects to GitHub.
+[bems-raffle.netlify.app](https://bems-raffle.netlify.app/) builds from `main` on GitHub. Build command: `npm run build`. Publish directory: `dist`. `netlify.toml` sets Node 20.
 
-1. Create an empty GitHub repository, for example `starlight-raffle`.
-2. Push this project to it. From a clone:
-
-```bash
-git remote add github git@github.com:YOUR_USER/starlight-raffle.git
-git push -u github main
-```
-
-3. In Netlify: **Add new site → Import an existing project → GitHub**. Pick the repository.
-4. Build command: `npm run build`
-5. Publish directory: `dist`
-6. Add the `VITE_FIREBASE_*` variables if you want sync without pasting the config on the projector.
-7. Deploy. `netlify.toml` already sets Node 20 and the single-page redirect.
+Leave the `VITE_FIREBASE_*` variables empty. You do not need them.
 
 The fanfare is generated in the browser. There is no music file to license or download.
 
