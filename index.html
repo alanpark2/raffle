@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content="A colorful classroom raffle. Names spin, the lights slow down, and one winner gets the fanfare." />
+    <title>Starlight Raffle</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <div class="sky" id="sky">
+      <div class="backdrop" aria-hidden="true">
+        <div class="starfield" id="starfield"></div>
+        <div class="swirls">
+          <div class="swirl a"></div>
+          <div class="swirl b"></div>
+          <div class="swirl c"></div>
+        </div>
+        <div class="lights">
+          <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="vignette"></div>
+      </div>
+      <canvas id="fx" aria-hidden="true"></canvas>
+      <div id="flash" class="flash" hidden></div>
+
+      <header class="topbar">
+        <div class="brand">
+          <div class="logo" aria-hidden="true">★</div>
+          <div>
+            <p class="eyebrow" id="room-label">Classroom Raffle</p>
+            <h1>Starlight Raffle</h1>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button class="sync-pill" id="sync-pill" type="button" data-state="local">This browser</button>
+          <button class="tool" id="mute-btn" type="button">Sound on</button>
+          <button class="tool" id="full-btn" type="button">Full screen</button>
+          <button class="tool" id="manage-btn" type="button">Names &amp; setup</button>
+        </div>
+      </header>
+
+      <main>
+        <div class="floaters" id="floaters" hidden aria-hidden="true">
+          <span class="floater"></span><span class="floater"></span><span class="floater"></span><span class="floater"></span>
+          <span class="floater"></span><span class="floater"></span><span class="floater"></span><span class="floater"></span>
+        </div>
+
+        <section id="empty" class="empty">
+          <div class="empty-card">
+            <p class="kicker">The hat is empty</p>
+            <h2>Drop in the class list</h2>
+            <p class="lede">CSV, Excel, text, or JSON. Odd columns can be fixed before anyone is drawn. A practice draw never removes a name.</p>
+            <label class="dropzone" id="dropzone" for="file">
+              <span>Drop the file here, or click to browse</span>
+            </label>
+            <textarea id="paste" class="paste" placeholder="Or paste names here, one per line"></textarea>
+            <div class="row">
+              <button class="btn-mint" id="use-paste" type="button">Use pasted names</button>
+              <button class="btn-ghost" id="demo-btn" type="button">Try demo names</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="stage" class="stage" hidden>
+          <div class="banner" id="demo-banner" hidden>
+            <p>These are demo names so you can rehearse. Load the real class list before the drawing. Practice draw keeps every name.</p>
+          </div>
+          <div class="banner warn" id="conflict" hidden>
+            <p id="conflict-text"></p>
+            <div class="row">
+              <button class="btn-mint" id="use-local" type="button">Use this browser's list instead</button>
+              <button class="btn-ghost" id="dismiss-conflict" type="button">Keep the shared list</button>
+            </div>
+          </div>
+
+          <div class="portal-wrap">
+            <div class="portal">
+              <div class="halo" aria-hidden="true"></div>
+              <div class="portal-ring" aria-hidden="true"></div>
+              <div class="portal-face">
+                <p id="ribbon" class="ribbon" hidden>Winner</p>
+                <p id="caption" class="caption">In the hat</p>
+                <h2 id="hero-name" class="hero-name">Starlight</h2>
+                <p id="count-line" class="count-line"></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bulbs" id="bulbs" aria-hidden="true"></div>
+          <div class="actions">
+            <button class="btn-draw" id="draw-btn" type="button">Draw a winner</button>
+            <button class="btn-test" id="test-btn" type="button" title="Runs the whole show but does not remove a name">Practice draw</button>
+          </div>
+          <button class="btn-ghost stage-reset" id="putback-btn" type="button" hidden>Put this name back</button>
+          <button class="btn-ghost stage-reset" id="reset-stage" type="button" hidden>Put everyone back in the hat</button>
+          <p class="fairness" id="fairness">A name is chosen at random before the lights start. The show is just the reveal. <span class="keys">D draws · T practices · M mutes · F fills the screen</span></p>
+          <section class="picked" id="picked-wrap" hidden>
+            <h3>Already picked</h3>
+            <ul id="picked-list"></ul>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="manage" aria-labelledby="manage-title">
+      <div class="dialog-body">
+        <div class="dialog-head">
+          <h2 id="manage-title">Names &amp; setup</h2>
+          <button class="btn-ghost" id="close-manage" type="button">Close</button>
+        </div>
+        <p class="hint">The big gold button really draws and removes that name. Practice draw is the rehearsal. Everything here is saved on this browser, and in Firebase too once it is connected.</p>
+        <p class="sync-detail" id="sync-detail"></p>
+        <p class="error" id="setup-note"></p>
+
+        <section class="panel">
+          <h3>Class list</h3>
+          <div class="stack">
+            <label>Room name <input id="class-title" type="text" maxlength="79" /></label>
+            <div class="row">
+              <button class="btn-mint" id="upload-btn" type="button">Upload a file</button>
+              <button class="btn-ghost" id="demo-manage" type="button">Load demo names</button>
+              <button class="btn-ghost" id="download-btn" type="button">Download remaining</button>
+              <button class="btn-ghost" id="reset-btn" type="button">Put everyone back</button>
+            </div>
+            <textarea id="paste-manage" class="paste" placeholder="Paste names, one per line"></textarea>
+            <button class="btn-ghost" id="use-paste-manage" type="button">Use pasted names</button>
+            <div class="row">
+              <input id="add-name" type="text" maxlength="80" placeholder="Add one more name" />
+              <button class="btn-mint" id="add-name-btn" type="button">Add</button>
+            </div>
+            <input id="name-filter" type="text" placeholder="Find a name" />
+            <div class="section-head"><h3>Still in the hat</h3></div>
+            <ul class="people" id="hat-list"></ul>
+            <h3>Already picked</h3>
+            <ul class="people" id="winner-admin"></ul>
+            <h3>Sitting out</h3>
+            <ul class="people" id="out-list"></ul>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h3>Firebase, free plan</h3>
+          <p class="hint">Optional. Spark plan only — do not turn on billing. Create a Firebase project, enable Firestore and Anonymous sign-in, publish <code>firestore.rules</code>, then paste the web config. The room code is the key to the list, so keep the long one.</p>
+          <p class="sync-detail" id="firebase-source"></p>
+          <div class="stack">
+            <label>Room code <input id="room-code" type="text" maxlength="40" autocomplete="off" /></label>
+            <div class="row">
+              <button class="btn-mint" id="save-room" type="button">Save room code</button>
+              <button class="btn-ghost" id="copy-room" type="button">Copy room code</button>
+            </div>
+            <textarea id="firebase-paste" class="paste" spellcheck="false" placeholder="Paste the firebaseConfig snippet from the Firebase console"></textarea>
+            <div class="row">
+              <button class="btn-mint" id="connect-firebase" type="button">Connect Firebase</button>
+              <button class="btn-ghost" id="clear-firebase" type="button">Use this browser only</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h3>Smartboard lock</h3>
+          <p class="hint">Optional. Drawing stays one tap. Opening this panel, putting a name back, or resetting the hat asks for the code.</p>
+          <div class="row">
+            <input id="new-pin" type="password" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="4 or more digits" />
+            <button class="btn-mint" id="save-pin" type="button">Save lock</button>
+            <button class="btn-ghost" id="clear-pin" type="button">Remove lock</button>
+          </div>
+        </section>
+      </div>
+    </dialog>
+
+    <dialog id="preview" aria-labelledby="preview-title">
+      <div class="dialog-body">
+        <div class="dialog-head">
+          <h2 id="preview-title">Check the names</h2>
+          <button class="btn-ghost" id="close-preview" type="button">Close</button>
+        </div>
+        <p id="preview-count" class="preview-count"></p>
+        <ul class="notes" id="preview-notes"></ul>
+        <div class="dialog-actions">
+          <button class="btn-ghost" id="flip-btn" type="button">Swap first and last word</button>
+          <button class="btn-ghost" id="dedupe-btn" type="button">Remove duplicate names</button>
+        </div>
+        <ul class="people" id="preview-list"></ul>
+        <div class="dialog-actions">
+          <button class="btn-mint" id="use-btn" type="button">Use this list</button>
+          <button class="btn-ghost" id="add-btn" type="button">Add to the hat</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="pin-dialog" aria-labelledby="pin-title">
+      <div class="dialog-body">
+        <h2 id="pin-title">Enter the lock code</h2>
+        <div class="stack">
+          <input id="pin-input" type="password" inputmode="numeric" maxlength="12" autocomplete="off" />
+          <p class="error" id="pin-error" hidden>That code doesn't match.</p>
+          <div class="row">
+            <button class="btn-mint" id="pin-ok" type="button">Unlock</button>
+            <button class="btn-ghost" id="pin-cancel" type="button">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="confirm-dialog" aria-labelledby="confirm-title">
+      <div class="dialog-body">
+        <h2 id="confirm-title">Are you sure?</h2>
+        <p id="confirm-body"></p>
+        <div class="row">
+          <button class="btn-mint" id="confirm-yes" type="button">Yes</button>
+          <button class="btn-ghost" id="confirm-no" type="button">Cancel</button>
+        </div>
+      </div>
+    </dialog>
+
+    <input id="file" class="file-input" type="file" accept=".csv,.txt,.tsv,.json,.xlsx,.xls,text/csv,text/plain,application/json" />
+    <div id="live" class="sr-only" aria-live="assertive"></div>
+    <noscript><p class="lede">Starlight Raffle needs JavaScript for the drawing.</p></noscript>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

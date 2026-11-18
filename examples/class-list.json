@@ -1,0 +1,8 @@
+{
+  "className": "Room 4",
+  "students": [
+    { "firstName": "Ava", "lastName": "Martinez" },
+    { "name": "Noah Patel" },
+    { "student": "Mia Chen" }
+  ]
+}
