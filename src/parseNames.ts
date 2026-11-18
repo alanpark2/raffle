@@ -282,27 +282,13 @@ function namesFromColumns(rows: string[][], indexes: number[], notes: string[]):
       : `Used ${indexes.length} name columns. The timestamp was skipped.`,
   );
   const names: string[] = [];
-  const seen = new Set<string>();
-  let repeated = 0;
   for (const row of rows) {
     for (const index of indexes) {
       const name = cleanName(row[index] || "");
-      if (!name) continue;
-      const key = name.toLocaleLowerCase();
-      if (seen.has(key)) {
-        repeated += 1;
-        continue;
-      }
-      seen.add(key);
-      names.push(name);
+      if (name) names.push(name);
     }
   }
-  if (repeated > 0) {
-    notes.push(
-      `${repeated === 1 ? "1 repeated nomination was" : `${repeated} repeated nominations were`} combined, so each kid is in the hat once.`,
-    );
-  }
-  return finalize(names, notes);
+  return finalize(names, notes, "tickets");
 }
 
 function normalizeHeader(cell: string): string {
@@ -384,7 +370,7 @@ function lastCommaFirst(cell: string): { name: string; flipped: true } | null {
   return name ? { name, flipped: true } : null;
 }
 
-function finalize(candidates: string[], notes: string[]): ParseResult {
+function finalize(candidates: string[], notes: string[], repeats: "share" | "tickets" = "share"): ParseResult {
   const names: string[] = [];
   const seen = new Map<string, number>();
   const duplicates: string[] = [];
@@ -402,7 +388,14 @@ function finalize(candidates: string[], notes: string[]): ParseResult {
     notes.push("Only the first 5,000 names were kept.");
   }
   if (!names.length) notes.push("No names found. Paste one name per line, or use a column called Name.");
-  if (duplicates.length) {
+  if (duplicates.length && repeats === "tickets") {
+    const extra = names.length - seen.size;
+    notes.push(
+      extra === 1
+        ? "1 extra nomination was kept as its own ticket, so that student has another chance."
+        : `${extra} extra nominations were kept as their own tickets. A name entered more often has more chances.`,
+    );
+  } else if (duplicates.length) {
     const sample = duplicates.slice(0, 4).join(", ");
     notes.push(
       `Kept repeated names in case two kids share one (${sample}${duplicates.length > 4 ? "…" : ""}). Remove the extras if the file doubled them.`,

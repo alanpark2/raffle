@@ -63,7 +63,7 @@ describe("namesFromText", () => {
     expect(result.notes[0]).toMatch(/empty/i);
   });
 
-  it("collects every name column from a Google Form and keeps each kid once", () => {
+  it("keeps every Google Form nomination as its own ticket", () => {
     const result = namesFromText(
       [
         "Timestamp,Student Name #1: ,Student Name #2: ,Student Name #3: ",
@@ -72,9 +72,17 @@ describe("namesFromText", () => {
         "11/11/2026 11:43:35,Liam Okafor,,",
       ].join("\n"),
     );
-    expect(result.names).toEqual(["Ava Martinez", "Noah Patel", "Mia Chen", "Liam Okafor"]);
+    expect(result.names).toEqual([
+      "Ava Martinez",
+      "Noah Patel",
+      "Ava Martinez",
+      "Mia Chen",
+      "Noah Patel",
+      "Liam Okafor",
+    ]);
     expect(result.notes.some((note) => /3 name columns/i.test(note))).toBe(true);
-    expect(result.notes.some((note) => /repeated nominations were combined/i.test(note))).toBe(true);
+    expect(result.notes.some((note) => /extra nominations were kept as their own tickets/i.test(note))).toBe(true);
+    expect(result.notes.some((note) => /two kids share one/i.test(note))).toBe(false);
     expect(result.names.join(" ")).not.toMatch(/timestamp|11\/11\/2026/i);
   });
 
