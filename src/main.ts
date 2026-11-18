@@ -156,7 +156,10 @@ function bind(): void {
   must<HTMLButtonElement>("use-paste-manage").addEventListener("click", () => openPreview(namesFromText(pasteManage.value)));
   must<HTMLButtonElement>("demo-btn").addEventListener("click", () => useDemo());
   must<HTMLButtonElement>("demo-manage").addEventListener("click", () => void useDemoGuarded());
-  must<HTMLButtonElement>("upload-btn").addEventListener("click", () => fileInput.click());
+  must<HTMLButtonElement>("upload-btn").addEventListener("click", pickNames);
+  must<HTMLButtonElement>("upload-top").addEventListener("click", pickNames);
+  must<HTMLButtonElement>("upload-empty").addEventListener("click", pickNames);
+  must<HTMLButtonElement>("open-saved-btn").addEventListener("click", pickNames);
   drawBtn.addEventListener("click", () => void spin("real"));
   testBtn.addEventListener("click", () => void spin("test"));
   putbackBtn.addEventListener("click", () => void restoreLast());
@@ -358,6 +361,16 @@ async function useDemoGuarded(): Promise<void> {
     if (!ok) return;
   }
   useDemo();
+}
+
+function pickNames(): void {
+  if (!readPin()) {
+    fileInput.click();
+    return;
+  }
+  void askPin("Enter the lock code to upload names").then((ok) => {
+    if (ok) fileInput.click();
+  });
 }
 
 async function handleFile(file: File): Promise<void> {

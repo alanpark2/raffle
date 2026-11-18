@@ -34,6 +34,7 @@
           </div>
         </div>
         <div class="top-actions">
+          <button class="btn-mint" id="upload-top" type="button">Upload names</button>
           <button class="sync-pill" id="sync-pill" type="button" data-state="local">This browser</button>
           <button class="tool" id="mute-btn" type="button">Sound on</button>
           <button class="tool" id="full-btn" type="button">Full screen</button>
@@ -57,7 +58,8 @@
             </label>
             <textarea id="paste" class="paste" placeholder="Or paste names here, one per line"></textarea>
             <div class="row">
-              <button class="btn-mint" id="use-paste" type="button">Use pasted names</button>
+              <button class="btn-mint" id="upload-empty" type="button">Upload names</button>
+              <button class="btn-ghost" id="use-paste" type="button">Use pasted names</button>
               <button class="btn-ghost" id="demo-btn" type="button">Try demo names</button>
             </div>
           </div>
@@ -110,7 +112,7 @@
           <h2 id="manage-title">Names &amp; setup</h2>
           <button class="btn-ghost" id="close-manage" type="button">Close</button>
         </div>
-        <p class="hint">The big gold button really draws and removes that name. Practice draw is the rehearsal. The show runs on this computer, so it stays fast with no internet. Names are saved in this browser. To run it later on a different computer, press <strong>Save a copy</strong> and open that file over there.</p>
+        <p class="hint">The big gold button really draws and removes that name. Practice draw is the rehearsal. <strong>Upload names</strong> reads a class list (CSV, Excel, or text). <strong>Save a copy</strong> saves this raffle so you can open it on another computer. The show runs on this computer, so it stays fast with no internet.</p>
         <p class="sync-detail" id="sync-detail"></p>
         <p class="error" id="setup-note"></p>
 
@@ -119,8 +121,9 @@
           <div class="stack">
             <label>Room name <input id="class-title" type="text" maxlength="79" /></label>
             <div class="row">
-              <button class="btn-mint" id="save-copy-btn" type="button">Save a copy</button>
-              <button class="btn-ghost" id="upload-btn" type="button">Open a file</button>
+              <button class="btn-mint" id="upload-btn" type="button">Upload names</button>
+              <button class="btn-ghost" id="save-copy-btn" type="button">Save a copy</button>
+              <button class="btn-ghost" id="open-saved-btn" type="button">Open saved raffle</button>
               <button class="btn-ghost" id="demo-manage" type="button">Load demo names</button>
               <button class="btn-ghost" id="download-btn" type="button">Download names only</button>
               <button class="btn-ghost" id="reset-btn" type="button">Put everyone back</button>
