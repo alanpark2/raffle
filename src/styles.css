@@ -207,6 +207,7 @@ body.is-spinning .floater { opacity: 0.72; }
 .kicker { color: var(--cyan); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; margin: 0; }
 .empty h2 { font-size: clamp(2rem, 5vw, 3.4rem); margin: 0.2rem 0 0.4rem; }
 .lede, .fairness, .hint, .sync-detail { color: var(--muted); }
+.sync-detail.is-error { color: #ffb4c2; }
 
 .dropzone {
   display: grid;

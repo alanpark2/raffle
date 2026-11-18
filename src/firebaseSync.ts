@@ -47,11 +47,17 @@ export function friendlyFirebaseError(err: unknown): string {
   const code = err && typeof err === "object" && "code" in err ? String((err as { code: unknown }).code) : "";
   const message = err instanceof Error ? err.message : "";
   const detail = `${code} ${message}`;
-  if (/operation-not-allowed/i.test(detail)) {
+  if (/configuration-not-found/i.test(detail)) {
+    return "Firebase Authentication is not turned on yet. Open Authentication, click Get started, enable Anonymous, then connect again.";
+  }
+  if (/operation-not-allowed|admin-restricted-operation/i.test(detail)) {
     return "Turn on Anonymous sign-in in Firebase Authentication, then connect again.";
   }
+  if (/unauthorized-domain/i.test(detail)) {
+    return "Add this website under Firebase Authentication → Settings → Authorized domains, then connect again.";
+  }
   if (/permission-denied/i.test(detail)) {
-    return "Firebase refused the save. Publish the Firestore rules from firestore.rules.";
+    return "Firebase refused the save. Publish the Firestore rules, then connect again.";
   }
   if (/invalid-api-key|api-key-not-valid|app\/invalid/i.test(detail)) {
     return "That Firebase config was rejected. Copy the web app config again.";

@@ -12,6 +12,7 @@ import { PARTY_COLORS, colorFor } from "./color";
 import { celebrateBurst, mountConfetti } from "./confetti";
 import { DEMO_NAMES } from "./demo";
 import { configFromEnv, parseFirebaseConfig } from "./firebaseConfig";
+import { friendlyFirebaseError } from "./firebaseSync";
 import { PIN_KEY, hasPeople, raffleFile, readSavedRaffle, sameShow } from "./model";
 import { dedupeNames, flipFirstLast, namesFromFile, namesFromText, type ParseResult } from "./parseNames";
 import {
@@ -71,6 +72,8 @@ const classTitle = must<HTMLInputElement>("class-title");
 const roomCode = must<HTMLInputElement>("room-code");
 const setupNote = must<HTMLElement>("setup-note");
 const syncDetail = must<HTMLElement>("sync-detail");
+const firebaseNote = must<HTMLElement>("firebase-note");
+const connectFirebaseBtn = must<HTMLButtonElement>("connect-firebase");
 const firebaseSource = must<HTMLElement>("firebase-source");
 const firebasePaste = must<HTMLTextAreaElement>("firebase-paste");
 const clearFirebaseBtn = must<HTMLButtonElement>("clear-firebase");
@@ -100,6 +103,7 @@ let ambientIndex = -1;
 let floaterOffset = 0;
 let draftNames: string[] = [];
 let usingEnvConfig = false;
+let firebaseAlert = "";
 
 boot();
 
@@ -181,7 +185,7 @@ function bind(): void {
   });
   must<HTMLButtonElement>("save-room").addEventListener("click", () => void saveRoom());
   must<HTMLButtonElement>("copy-room").addEventListener("click", () => void copyRoom());
-  must<HTMLButtonElement>("connect-firebase").addEventListener("click", () => void connectFirebase());
+  connectFirebaseBtn.addEventListener("click", () => void connectFirebase());
   clearFirebaseBtn.addEventListener("click", () => {
     if (usingEnvConfig) {
       note("This site is using the Netlify Firebase settings. Remove those environment variables to disconnect.");
@@ -230,6 +234,10 @@ function render(): void {
   syncPill.textContent = store.sync === "live" ? "Synced" : store.sync === "connecting" ? "Connecting…" : store.sync === "error" ? "Sync problem" : "This browser";
   syncPill.title = store.syncMessage;
   syncDetail.textContent = store.syncMessage;
+  firebaseNote.textContent = firebaseAlert || store.syncMessage;
+  firebaseNote.classList.toggle("is-error", store.sync === "error" || Boolean(firebaseAlert));
+  connectFirebaseBtn.textContent = store.sync === "connecting" ? "Connecting…" : "Connect Firebase";
+  connectFirebaseBtn.disabled = store.sync === "connecting";
   firebaseSource.textContent = usingEnvConfig
     ? "Using the Firebase settings from Netlify."
     : loadSavedConfigText()
@@ -516,17 +524,31 @@ async function copyRoom(): Promise<void> {
 
 async function connectFirebase(): Promise<void> {
   if (usingEnvConfig) {
-    note("Netlify is already supplying the Firebase config.");
+    showFirebaseNote("Netlify is already supplying the Firebase config.");
     return;
   }
   const config = parseFirebaseConfig(firebasePaste.value);
   if (!config) {
-    note("Paste the firebaseConfig block from Project settings → Your apps.");
+    showFirebaseNote("Paste the firebaseConfig block from Project settings → Your apps.");
     return;
   }
+  firebaseAlert = "";
   saveConfigText(JSON.stringify(config));
-  await store.connect(config);
-  note(store.sync === "error" ? store.syncMessage : "Connected. The free Spark plan is enough for a class list.");
+  render();
+  try {
+    await store.connect(config);
+  } catch (err) {
+    showFirebaseNote(friendlyFirebaseError(err));
+    return;
+  }
+  render();
+  firebaseNote.scrollIntoView({ block: "nearest" });
+}
+
+function showFirebaseNote(message: string): void {
+  firebaseAlert = message;
+  render();
+  firebaseNote.scrollIntoView({ block: "nearest" });
 }
 
 async function savePin(): Promise<void> {
